@@ -6,8 +6,9 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import com.bienesraices.api.config.JwtProperties;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -20,13 +21,10 @@ public class JwtUtil {
     private final Key key;
     private final long expMillis;
 
-    public JwtUtil(
-            @Value("${app.jwt.secret}") String secret,
-            @Value("${app.jwt.expMin}") long expMin
-    ) {
-        // secret fijo desde application.properties (>=32 chars para HS256)
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expMillis = expMin * 60_000L; // minutos -> milisegundos
+    // Inyecta las props tipadas: app.jwt.secret y app.jwt.expMin
+    public JwtUtil(JwtProperties props) {
+        this.key = Keys.hmacShaKeyFor(props.getSecret().getBytes(StandardCharsets.UTF_8));
+        this.expMillis = props.getExpMin() * 60_000L; // minutos -> ms
     }
 
     /** Genera un JWT con subject=userId y claims email/rol. */
@@ -48,19 +46,15 @@ public class JwtUtil {
     public Claims parse(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(key)
-                .setAllowedClockSkewSeconds(60) // pequeña tolerancia de reloj
+                .setAllowedClockSkewSeconds(60) // tolerancia de reloj
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
 
-    /** Valida sin lanzar excepción: true si pasa parse(), false si no. */
+    /** Valida sin lanzar excepción. */
     public boolean isValid(String token) {
-        try {
-            parse(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        try { parse(token); return true; }
+        catch (Exception e) { return false; }
     }
 }
