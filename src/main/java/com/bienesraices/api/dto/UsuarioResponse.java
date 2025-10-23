@@ -1,7 +1,5 @@
 package com.bienesraices.api.dto;
 
-
-
 import com.bienesraices.api.model.Rol;
 
 public class UsuarioResponse {
@@ -11,16 +9,20 @@ public class UsuarioResponse {
     private Rol rol;
     private Boolean activo;
 
+    // ✅ NUEVO: número de casa
+    private String numeroCasa;
+
     // Constructor vacío (recomendado para frameworks)
     public UsuarioResponse() {}
 
-    // ✅ Constructor con todos los campos (el que te pide el servicio)
-    public UsuarioResponse(Long id, String nombre, String email, Rol rol, Boolean activo) {
+    // ✅ Constructor con todos los campos
+    public UsuarioResponse(Long id, String nombre, String email, Rol rol, Boolean activo, String numeroCasa) {
         this.id = id;
         this.nombre = nombre;
         this.email = email;
         this.rol = rol;
         this.activo = activo;
+        this.numeroCasa = numeroCasa;
     }
 
     // Getters y Setters
@@ -38,4 +40,7 @@ public class UsuarioResponse {
 
     public Boolean getActivo() { return activo; }
     public void setActivo(Boolean activo) { this.activo = activo; }
+
+    public String getNumeroCasa() { return numeroCasa; }
+    public void setNumeroCasa(String numeroCasa) { this.numeroCasa = numeroCasa; }
 }

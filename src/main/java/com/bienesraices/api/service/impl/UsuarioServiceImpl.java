@@ -23,15 +23,16 @@ public class UsuarioServiceImpl implements UsuarioService {
         this.repo = repo;
     }
 
-    // Conversión Entidad -> DTO de salida (para no exponer password)
+    // Conversión Entidad -> DTO de salida (sin usar constructor)
     private UsuarioResponse toResp(Usuario u) {
-        return new UsuarioResponse(
-                u.getId(),
-                u.getNombre(),
-                u.getEmail(),
-                u.getRol(),
-                u.getActivo()
-        );
+        UsuarioResponse r = new UsuarioResponse();
+        r.setId(u.getId());
+        r.setNombre(u.getNombre());
+        r.setEmail(u.getEmail());
+        r.setRol(u.getRol());
+        r.setActivo(u.getActivo());
+        r.setNumeroCasa(u.getNumeroCasa()); // ✅ numeroCasa
+        return r;
     }
 
     @Override
@@ -52,15 +53,14 @@ public class UsuarioServiceImpl implements UsuarioService {
         Usuario u = new Usuario();
         u.setNombre(req.getNombre());
         u.setEmail(req.getEmail());
-        // 🔐 Hash de contraseña con BCrypt
-        u.setPassword(encoder.encode(req.getPassword()));
+        u.setPassword(encoder.encode(req.getPassword())); // 🔐 hash
         u.setRol(req.getRol());
         u.setActivo(req.getActivo());
+        u.setNumeroCasa(req.getNumeroCasa()); // ✅ agregado
         try {
             return toResp(repo.save(u));
         } catch (DataIntegrityViolationException ex) {
-            // Si tienes email único, esto captura duplicados (409 en el handler)
-            throw ex;
+            throw ex; // duplicado de email u otras violaciones
         }
     }
 
@@ -69,12 +69,12 @@ public class UsuarioServiceImpl implements UsuarioService {
         return repo.findById(id).map(db -> {
             db.setNombre(req.getNombre());
             db.setEmail(req.getEmail());
-            // Solo re-hashear si vino un password NO vacío
             if (req.getPassword() != null && !req.getPassword().isBlank()) {
-                db.setPassword(encoder.encode(req.getPassword()));
+                db.setPassword(encoder.encode(req.getPassword())); // 🔐 re-hash
             }
             db.setRol(req.getRol());
             db.setActivo(req.getActivo());
+            db.setNumeroCasa(req.getNumeroCasa()); // ✅ agregado
             return toResp(repo.save(db));
         });
     }

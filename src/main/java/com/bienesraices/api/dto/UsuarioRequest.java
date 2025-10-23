@@ -1,6 +1,5 @@
 package com.bienesraices.api.dto;
 
-
 import com.bienesraices.api.model.Rol;
 import jakarta.validation.constraints.*;
 
@@ -20,6 +19,12 @@ public class UsuarioRequest {
 
     private Boolean activo = true;
 
+    // ✅ NUEVO: número de casa (opcional, hasta 20 chars)
+    @Size(max = 20)
+    @Pattern(regexp = "^[A-Za-z0-9\\-\\/ ]*$",
+             message = "numeroCasa solo puede contener letras, números, espacio, '-' y '/'")
+    private String numeroCasa;
+
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
 
@@ -34,4 +39,7 @@ public class UsuarioRequest {
 
     public Boolean getActivo() { return activo; }
     public void setActivo(Boolean activo) { this.activo = activo; }
+
+    public String getNumeroCasa() { return numeroCasa; }
+    public void setNumeroCasa(String numeroCasa) { this.numeroCasa = numeroCasa; }
 }
