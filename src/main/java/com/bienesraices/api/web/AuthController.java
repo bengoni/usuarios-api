@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ import java.util.Map;
 @Tag(name = "auth-controller", description = "Autenticación con JWT")
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin
+@CrossOrigin(origins = "*")
 public class AuthController {
 
     private final UsuarioRepository repo;
@@ -32,11 +33,16 @@ public class AuthController {
     }
 
     @Operation(summary = "Login", description = "Valida credenciales y devuelve un JWT")
-    @PostMapping("/login")
+    @PostMapping(
+            value = "/login",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
         return repo.findByEmail(req.getEmail())
                 .filter(Usuario::getActivo)
                 .map(u -> {
+                    // Comparación con BCrypt (raw vs hashed)
                     if (!encoder.matches(req.getPassword(), u.getPassword())) {
                         return unauthorized("Credenciales inválidas");
                     }
@@ -48,7 +54,7 @@ public class AuthController {
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Quién soy", description = "Devuelve info del usuario extraída del token")
-    @GetMapping("/me")
+    @GetMapping(value = "/me", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> me(@RequestHeader(name = "Authorization", required = false) String auth) {
         var token = getBearer(auth);
         if (token == null) return unauthorized("Falta header Authorization");
@@ -66,7 +72,7 @@ public class AuthController {
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Validar token", description = "Retorna true/false si el token es válido")
-    @GetMapping("/validate")
+    @GetMapping(value = "/validate", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> validate(@RequestHeader(name = "Authorization", required = false) String auth) {
         var token = getBearer(auth);
         if (token == null) return unauthorized("Falta header Authorization");
@@ -80,7 +86,7 @@ public class AuthController {
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Refrescar token", description = "Genera un nuevo JWT a partir de uno válido")
-    @PostMapping("/refresh")
+    @PostMapping(value = "/refresh", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> refresh(@RequestHeader(name = "Authorization", required = false) String auth) {
         var token = getBearer(auth);
         if (token == null) return unauthorized("Falta header Authorization");
@@ -90,8 +96,8 @@ public class AuthController {
             String email = (String) claims.get("email");
             String rol = (String) claims.get("rol");
 
-            // (Opcional) verificar que el usuario siga activo
-            var ok = repo.findById(userId).filter(Usuario::getActivo).isPresent();
+            // (Opcional) Verificar que el usuario siga activo
+            boolean ok = repo.findById(userId).filter(Usuario::getActivo).isPresent();
             if (!ok) return unauthorized("Usuario deshabilitado");
 
             String newToken = jwt.generateToken(userId, email, rol);
@@ -112,3 +118,4 @@ public class AuthController {
         return ResponseEntity.status(401).body(Map.of("error", msg));
     }
 }
+
