@@ -1,6 +1,6 @@
 package com.bienesraices.api.config;
 
-
+import com.bienesraices.api.model.Rol;
 import com.bienesraices.api.model.Usuario;
 import com.bienesraices.api.repository.UsuarioRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -19,19 +19,19 @@ public class DataSeeder {
         BCryptPasswordEncoder enc = new BCryptPasswordEncoder();
 
         Usuario u = new Usuario();
-        u.setNombre("Admin");
+        u.setNombre("Admin Demo");
         u.setEmail(email);
-        u.setPassword(enc.encode("Admin1234")); // ¡BCrypt!
-
-        // Campos opcionales si existen en tu entidad; si no existen, no pasa nada
-        try { u.getClass().getMethod("setRol", String.class).invoke(u, "ADMIN"); } catch (Exception ignored) {}
-        try { u.getClass().getMethod("setActivo", Boolean.class).invoke(u, Boolean.TRUE); } catch (Exception ignored) {}
+        u.setPassword(enc.encode("Admin1234")); // hash
+        u.setRol(Rol.ADMIN);
+        u.setActivo(true);
+        u.setNumeroCasa("101");
 
         repo.save(u);
-        System.out.println("[DataSeeder] Usuario admin creado: " + email);
+        System.out.println("[DataSeeder] Admin creado: " + email + " / Admin1234");
       } else {
         System.out.println("[DataSeeder] Admin ya existe: " + email);
       }
     };
   }
 }
+
